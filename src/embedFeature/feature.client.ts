@@ -25,7 +25,7 @@ export const EmbedFeatureClient = createClientFeature({
           ChildComponent: EmbedIcon,
           label: 'Embed',
           onSelect: ({ editor }) => {
-            editor.dispatchCommand(OPEN_EMBED_DRAWER_COMMAND, undefined)
+            editor.dispatchCommand(OPEN_EMBED_DRAWER_COMMAND, {})
           },
         },
       ]),
@@ -38,7 +38,7 @@ export const EmbedFeatureClient = createClientFeature({
           key: 'embed',
           label: 'Embed',
           onSelect: ({ editor }) => {
-            editor.dispatchCommand(OPEN_EMBED_DRAWER_COMMAND, undefined)
+            editor.dispatchCommand(OPEN_EMBED_DRAWER_COMMAND, {})
           },
           keywords: ['embed'],
           Icon: EmbedIcon,

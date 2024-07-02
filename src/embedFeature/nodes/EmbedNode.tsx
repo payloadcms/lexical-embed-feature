@@ -37,7 +37,7 @@ export const INSERT_EMBED_COMMAND: LexicalCommand<EmbedNodeData> =
   createCommand('INSERT_EMBED_COMMAND')
 
 export const OPEN_EMBED_DRAWER_COMMAND: LexicalCommand<{
-  data: EmbedNodeData | null
+  data?: EmbedNodeData | null
   nodeKey?: string
 }> = createCommand('OPEN_EMBED_DRAWER_COMMAND')
 

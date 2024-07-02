@@ -1,7 +1,7 @@
 'use client'
 
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext.js'
-import { $insertNodeToNearestRoot } from '@lexical/utils'
+import { $insertNodeToNearestRoot, mergeRegister } from '@lexical/utils'
 import {
   $getNodeByKey,
   $getSelection,
@@ -31,75 +31,74 @@ export const EmbedPlugin: PluginComponent = () => {
   const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null)
 
   useEffect(() => {
-    return editor.registerCommand(
-      INSERT_EMBED_COMMAND,
-      ({ url }) => {
-        if (targetNodeKey) {
-          // Replace existing embed node
-          const node: EmbedNode = $getNodeByKey(targetNodeKey) as EmbedNode
-          if (!node) {
-            return false
+    return mergeRegister(
+      editor.registerCommand(
+        INSERT_EMBED_COMMAND,
+        ({ url }) => {
+          if (targetNodeKey) {
+            // Replace existing embed node
+            const node: EmbedNode = $getNodeByKey(targetNodeKey) as EmbedNode
+            if (!node) {
+              return false
+            }
+            node.setData({ url })
+
+            setTargetNodeKey(null)
+            return true
           }
-          node.setData({ url })
 
-          setTargetNodeKey(null)
-          return true
-        }
+          let selection = $getSelection()
 
-        let selection = $getSelection()
-
-        if (!$isRangeSelection(selection)) {
-          selection = lastSelection as RangeSelection | null
           if (!$isRangeSelection(selection)) {
-            return false
+            selection = lastSelection as RangeSelection | null
+            if (!$isRangeSelection(selection)) {
+              return false
+            }
           }
-        }
 
-        const focusNode = selection.focus.getNode()
+          const focusNode = selection.focus.getNode()
 
-        if (focusNode !== null) {
-          const horizontalRuleNode = $createEmbedNode({
-            url,
-          })
-          $insertNodeToNearestRoot(horizontalRuleNode)
-        }
+          if (focusNode !== null) {
+            const horizontalRuleNode = $createEmbedNode({
+              url,
+            })
+            $insertNodeToNearestRoot(horizontalRuleNode)
+          }
 
-        return true
-      },
-      COMMAND_PRIORITY_EDITOR,
-    )
-  }, [editor, lastSelection, targetNodeKey])
-
-  useEffect(() => {
-    return editor.registerCommand(
-      OPEN_EMBED_DRAWER_COMMAND,
-      (embedData) => {
-        setEmbedData(embedData?.data ?? {})
-        setTargetNodeKey(embedData?.nodeKey ?? null)
-
-        if (embedData?.nodeKey) {
-          toggleModal(drawerSlug)
           return true
-        }
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
+      editor.registerCommand(
+        OPEN_EMBED_DRAWER_COMMAND,
+        (embedData) => {
+          setEmbedData(embedData?.data ?? {})
+          setTargetNodeKey(embedData?.nodeKey ?? null)
 
-        let rangeSelection: RangeSelection | null = null
-
-        editor.getEditorState().read(() => {
-          const selection = $getSelection()
-          if ($isRangeSelection(selection)) {
-            rangeSelection = selection
+          if (embedData?.nodeKey) {
+            toggleModal(drawerSlug)
+            return true
           }
-        })
 
-        if (rangeSelection) {
-          setLastSelection(rangeSelection)
-          toggleModal(drawerSlug)
-        }
-        return true
-      },
-      COMMAND_PRIORITY_EDITOR,
+          let rangeSelection: RangeSelection | null = null
+
+          editor.getEditorState().read(() => {
+            const selection = $getSelection()
+            if ($isRangeSelection(selection)) {
+              rangeSelection = selection
+            }
+          })
+
+          if (rangeSelection) {
+            setLastSelection(rangeSelection)
+            toggleModal(drawerSlug)
+          }
+          return true
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
     )
-  }, [editor, toggleModal])
+  }, [editor, lastSelection, targetNodeKey, toggleModal])
 
   return (
     <FieldsDrawer
