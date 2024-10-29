@@ -56,12 +56,12 @@ export default buildConfig({
       ],
     },
   ],
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET || 'sdasd',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: mongooseAdapter({
-    url: process.env.MONGODB_URI || '',
+    url: process.env.MONGODB_URI || 'mongodb://localhost',
   }),
 
   /**
