@@ -11,7 +11,7 @@ const urlField: TextField = {
 
 export const EmbedFeature = createServerFeature({
   feature: {
-    ClientFeature: EmbedFeatureClient,
+    ClientFeature: 'src/embedFeature/feature.client#EmbedFeatureClient',
     nodes: [
       {
         node: EmbedNode,

@@ -19,6 +19,14 @@ export default buildConfig({
       TreeViewFeature(),
     ],
   }),
+  admin: { 
+    components: {
+      "feature.client": {
+        Embed: 'src/embedFeature/feature.client#EmbedFeatureClient'
+      }
+    }
+  },
+
   collections: [
     {
       slug: 'users',
@@ -56,12 +64,12 @@ export default buildConfig({
       ],
     },
   ],
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET || 'default password',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: mongooseAdapter({
-    url: process.env.MONGODB_URI || '',
+    url: process.env.MONGODB_URI || 'mongodb://localhost',
   }),
 
   /**

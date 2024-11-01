@@ -26,78 +26,78 @@ const drawerSlug = 'lexical-embed-create'
 export const EmbedPlugin: PluginComponent = () => {
   const [editor] = useLexicalComposerContext()
   const { closeModal, toggleModal } = useModal()
-  const [lastSelection, setLastSelection] = useState<RangeSelection | null>()
+  const [lastSelection, setLastSelection] = useState<RangeSelection | null>(null)
   const [embedData, setEmbedData] = useState<EmbedNodeData | {}>({})
   const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null)
 
   useEffect(() => {
-    return mergeRegister(
-      editor.registerCommand(
-        INSERT_EMBED_COMMAND,
-        ({ url }) => {
-          if (targetNodeKey) {
-            // Replace existing embed node
-            const node: EmbedNode = $getNodeByKey(targetNodeKey) as EmbedNode
-            if (!node) {
-              return false
-            }
-            node.setData({ url })
+    const ensureValidSelection = () => {
+      let selection = $getSelection()
+      if ($isRangeSelection(selection)) {
+        return selection
+      } else if ($isRangeSelection(lastSelection)) {
+        return lastSelection
+      }
+      console.error('No valid range selection found')
+      return null
+    }
 
-            setTargetNodeKey(null)
-            return true
+    const insertEmbedCommand = editor.registerCommand(
+      INSERT_EMBED_COMMAND,
+      ({ url }) => {
+        if (targetNodeKey !== null) {
+          const node: EmbedNode = $getNodeByKey(targetNodeKey) as EmbedNode
+          if (!node) {
+            console.error('Target node not found', targetNodeKey)
+            return false
           }
-
-          let selection = $getSelection()
-
-          if (!$isRangeSelection(selection)) {
-            selection = lastSelection as RangeSelection | null
-            if (!$isRangeSelection(selection)) {
-              return false
-            }
-          }
-
-          const focusNode = selection.focus.getNode()
-
-          if (focusNode !== null) {
-            const horizontalRuleNode = $createEmbedNode({
-              url,
-            })
-            $insertNodeToNearestRoot(horizontalRuleNode)
-          }
-
+          node.setData({ url })
+          setTargetNodeKey(null)
           return true
-        },
-        COMMAND_PRIORITY_EDITOR,
-      ),
-      editor.registerCommand(
-        OPEN_EMBED_DRAWER_COMMAND,
-        (embedData) => {
-          setEmbedData(embedData?.data ?? {})
-          setTargetNodeKey(embedData?.nodeKey ?? null)
+        }
 
-          if (embedData?.nodeKey) {
-            toggleModal(drawerSlug)
-            return true
-          }
+        const selection = ensureValidSelection()
+        if (!selection) return false
 
-          let rangeSelection: RangeSelection | null = null
+        const focusNode = selection.focus.getNode()
+        if (!focusNode) {
+          console.error('Focus node not found from selection', selection)
+          return false
+        }
 
-          editor.getEditorState().read(() => {
-            const selection = $getSelection()
-            if ($isRangeSelection(selection)) {
-              rangeSelection = selection
-            }
-          })
+        const horizontalRuleNode = $createEmbedNode({ url })
+        $insertNodeToNearestRoot(horizontalRuleNode)
 
-          if (rangeSelection) {
-            setLastSelection(rangeSelection)
-            toggleModal(drawerSlug)
-          }
-          return true
-        },
-        COMMAND_PRIORITY_EDITOR,
-      ),
+        return true
+      },
+      COMMAND_PRIORITY_EDITOR,
     )
+
+    const openEmbedDrawerCommand = editor.registerCommand(
+      OPEN_EMBED_DRAWER_COMMAND,
+      (embedData) => {
+        setEmbedData(embedData?.data ?? {})
+        setTargetNodeKey(embedData?.nodeKey ?? null)
+
+        if (embedData?.nodeKey) {
+          toggleModal(drawerSlug)
+          return true
+        }
+
+        const selection = ensureValidSelection()
+        if (selection) {
+          setLastSelection(selection)
+          toggleModal(drawerSlug)
+        }
+        return true
+      },
+      COMMAND_PRIORITY_EDITOR,
+    )
+
+    return () => {
+      insertEmbedCommand()
+      openEmbedDrawerCommand()
+    }
   }, [editor, lastSelection, targetNodeKey, toggleModal])
 
   return (
